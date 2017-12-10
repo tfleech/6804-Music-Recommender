@@ -1,0 +1,40 @@
+var modelBPM = function(){
+  var mBPM = sample(Gaussian({mu: 110, sigma: 10}))
+  observe(Gaussian({mu: mBPM, sigma: 1}), 130)
+  observe(Gaussian({mu: mBPM, sigma: 5}), 100)
+  observe(Gaussian({mu: mBPM, sigma: 2}), 120)
+  return mBPM
+}
+
+var modelDance = function(){
+  var mDance = sample(Gaussian({mu: 5, sigma: 2}))
+  observe(Gaussian({mu: mDance, sigma: 0.8}), 3)
+  observe(Gaussian({mu: mDance, sigma: 0.5}), 8)
+  observe(Gaussian({mu: mDance, sigma: 0.1}), 9)
+  return mDance
+}
+
+
+var distBPM = Infer({method: 'MCMC', samples:10000}, modelBPM)
+var distDance = Infer({method: 'MCMC', samples:10000}, modelDance)
+
+var mapBPM = map(function(x) {return sample(distBPM)}, _.range(10000))
+var uBPM = listMean(mapBPM)
+var sBPM = listVar(mapBPM)
+
+
+var mapDance = map(function(x) {return sample(distDance)}, _.range(10000))
+var uDance = listMean(mapDance)
+var sDance = listVar(mapDance)
+
+//print(sDance)
+//print(uDance)
+
+
+
+var u = Vector([uBPM, uDance])
+var c = Matrix([[sBPM, 0.03],[0.05, sDance]])
+var song_vec = MultivariateGaussian({mu: u, cov: c})
+var s = sample(song_vec)
+//print(s)
+viz(song_vec)
