@@ -7,8 +7,7 @@ import numpy as np
 try:
     import sqlite3
 except ImportError:
-    print 'you need sqlite3 installed to use this program'
-    sys.exit(0)
+    print('you need sqlite3 installed to use this program')
 
 import hdf5_getters as h5
 import csv
@@ -45,7 +44,7 @@ def get_path_from_id(id):
 Finds the squared error between two feature vectors
 """
 def se(feature1, feature2):
-    return np.square(np.subtract(feature1, feature2))
+    return np.sum(np.square(np.subtract(feature1, feature2)))
 
 
 """
@@ -132,13 +131,27 @@ def get_subset(cursor):
 
     return [titles, song_vec]
 
+def find_matches(new_vec, titles, song_vec, N):
+    suggestions = []
+    for n in range(N):
+        min_ind = 0;
+        min_val = 99999999;
+        for i in range(len(song_vec)):
+            if se(song_vec[i], new_vec) < min_val:
+                min_val = se(song_vec[i], new_vec)
+                min_ind = i
+        suggestions.append(titles[min_ind])
+        titles.pop(min_ind)
+        song_vec.pop(min_ind)
+    return suggestions
+
 # PATH TO track_metadat.db
-dbfile = '/media/tom/New Volume/6.804/database/AdditionalFiles/track_metadata.db'
+#dbfile = '/media/tom/New Volume/6.804/database/AdditionalFiles/track_metadata.db'
 
 # connect to the SQLite database
-conn = sqlite3.connect(dbfile)
-cursor = conn.cursor()
-TABLENAME = 'songs'
+#conn = sqlite3.connect(dbfile)
+#cursor = conn.cursor()
+#TABLENAME = 'songs'
 
 """
 Example of sampling database and then building csv for future
@@ -157,8 +170,11 @@ print(titles)
 print(means)
 print(stdevs)
 
-cursor.close()
-conn.close()
+new_vec = [110.0, 0.0, 0.0, -14.0, 1980]
+print(find_matches(new_vec, titles, song_vec, 2))
+
+#cursor.close()
+#conn.close()
 
 """
 A sample Query and construction of song_vecs and titles
