@@ -12,11 +12,11 @@ except ImportError:
 
 import hdf5_getters as h5
 
-    """
-    This function will return a feature vector containing tempo, danceability, energy,
-    loudnes, and year given a path.  The path can be generated using 
-    "get_path_from_id."
-    """
+"""
+This function will return a feature vector containing tempo, danceability, energy,
+loudnes, and year given a path.  The path can be generated using 
+"get_path_from_id."
+"""
 def get_feature_vector(path):
     song_data = h5.open_h5_file_read(path)
     danceability = h5.get_danceability(song_data)
@@ -28,16 +28,19 @@ def get_feature_vector(path):
     return [tempo, danceability, energy, loudness, year]
 
 
-    """
-    Use this to generate the path to a song.  Pass in a track_id which can be found
-    from the sqlite database.
-    """
+"""
+Use this to generate the path to a song.  Pass in a track_id which can be found
+from the sqlite database.
+"""
 def get_path_from_id(id):
     path_to_db = '/media/tom/New Volume/6.804/6804-Music-Recommender/'
     folder1 = id[2]
     folder2 = id[3]
     folder3 = id[4]
     return path_to_db + folder1 + '/' + folder2 + '/' + folder3 + '/' + id + '.h5'
+
+def se(feature1, feature2):
+    return np.square(np.subtract(feature1, feature2))
 
 
 def encode_string(s):
@@ -59,25 +62,45 @@ dbfile = '/media/tom/New Volume/6.804/6804-Music-Recommender/AdditionalFiles/tra
 # connect to the SQLite database
 conn = sqlite3.connect(dbfile)
 
-# from that connection, get a cursor to do queries
 c = conn.cursor()
-#c = conn.execute('select * from tracks')
-
-# so there is no confusion, the table name is 'songs'
 TABLENAME = 'songs'
 
+#Query to select sample of rows
+'''
+SELECT * FROM Table1
+WHERE (ABS(CAST(
+(BINARY_CHECKSUM(*) *
+RAND()) as int)) % 100) < 10
+'''
 
 #Use some query to find a track id
 q = "SELECT title, track_id FROM songs WHERE artist_name="
 q += encode_string('Bob Dylan')
 res = c.execute(q)
-song = res.fetchone()
-print(song[0])
+songs = res.fetchall()[:4]
+#print(songs)
 
 #Generate the path and feature vector for that song
-song_path = get_path_from_id(song[1])
-song_vec = get_feature_vector(song_path)
-print(song_vec)
+song_vec = []
+#This is a master list
+feature_lists = [[],[],[],[],[]]
+for i in range(len(songs)):
+    song_path = get_path_from_id(songs[i][1])
+    song_features = get_feature_vector(song_path)
+    song_vec.append(song_features)
+    for j in range(5):
+        feature_lists[j].append(song_features[j])
+
+means = []
+variances = []
+stdevs = []
+for i in range(5):
+    means.append(sum(feature_lists[i])/len(feature_lists[i]))
+    variances.append(np.var(feature_lists[i], ddof=1))
+    stdevs.append(variances[i]**0.5)
+
+print(means)
+print(stdevs)
 
 # close the cursor and the connection
 # (if for some reason you added stuff to the db or alter
