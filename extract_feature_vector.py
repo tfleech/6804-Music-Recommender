@@ -34,15 +34,24 @@ Use this to generate the path to a song.  Pass in a track_id which can be found
 from the sqlite database.
 """
 def get_path_from_id(id):
+    #path to million song database
     path_to_db = '/media/tom/New Volume/6.804/database/'
     folder1 = id[2]
     folder2 = id[3]
     folder3 = id[4]
     return path_to_db + folder1 + '/' + folder2 + '/' + folder3 + '/' + id + '.h5'
 
+"""
+Finds the squared error between two feature vectors
+"""
 def se(feature1, feature2):
     return np.square(np.subtract(feature1, feature2))
 
+
+"""
+Adds the titles and feature vectors for a list of songs to a csv file.  This
+is used to store a subset of the main database for comparisons later.
+"""
 def build_csv(titles, features):
     data_to_write = []
     for i in range(len(titles)):
@@ -52,6 +61,9 @@ def build_csv(titles, features):
         writer = csv.writer(myFile)
         writer.writerows(data_to_write)
 
+"""
+Reads in songs stored in csv
+"""
 def read_csv(csv_file):
     songs = []
     titles = []
@@ -60,8 +72,15 @@ def read_csv(csv_file):
         for row in reader:
             titles.append(row[0])
             songs.append([float(row[1]), float(row[2]), float(row[3]), float(row[4]), float(row[5])])
-    return [songs, titles]
+    return [titles, songs]
 
+
+"""
+Finds the mean, variance, and standard deviation for a list of song
+feature vectors.  It first regroups the feature vectors to put all
+of the same features together in a list.  It then uses numpy and
+simple algebra to compute the three values for each feature.
+"""
 def get_stats_from_song_vec(song_vec):
     feature_lists = [[],[],[],[],[]]
     for i in range(len(song_vec)):
@@ -88,32 +107,67 @@ def encode_string(s):
     """
     return "'"+s.replace("'","''")+"'"
 
+"""
+First, finds the title and track_id for a random sample of
+1000 songs using the sqlite database.  Then, it generates
+the song vector for the h5 file and returns the titles and
+song vectors.
+"""
+def get_subset(cursor):
+    #Select 0.1% (1,000 songs) from the database
+    #q = "SELECT title, track_id FROM songs WHERE (ABS(CAST((BINARY_CHECKSUM(*) *RAND()) as int)) % 10000) < 10"
+    q = "SELECT title, track_id FROM songs WHERE artist_name="
+    q += encode_string('Bob Dylan')
+    res = cursor.execute(q)
+    songs = res.fetchall()[:4]
+
+    #Generate the path and feature vector for that song
+    song_vec = []
+    titles = []
+    for i in range(len(songs)):
+        titles.append(songs[i][0])
+        song_path = get_path_from_id(songs[i][1])
+        song_features = get_feature_vector(song_path)
+        song_vec.append(song_features)
+
+    return [titles, song_vec]
+
 # PATH TO track_metadat.db
-# CHANGE THIS TO YOUR LOCAL CONFIGURATION
-# IT SHOULD BE IN THE ADDITIONAL FILES
-# (you can use 'subset_track_metadata.db')
 dbfile = '/media/tom/New Volume/6.804/database/AdditionalFiles/track_metadata.db'
 
 # connect to the SQLite database
 conn = sqlite3.connect(dbfile)
-
-c = conn.cursor()
+cursor = conn.cursor()
 TABLENAME = 'songs'
 
-#Query to select sample of rows
-'''
-SELECT * FROM Table1
-WHERE (ABS(CAST(
-(BINARY_CHECKSUM(*) *
-RAND()) as int)) % 100) < 10
-'''
+"""
+Example of sampling database and then building csv for future
+use.
+"""
+#[titles, song_vec] = get_subset(cursor)
+#build_csv(titles, song_vec)
+
+
+
+[titles, song_vec] = read_csv('song_subset.csv')
+print(titles)
+
+[means, variances, stdevs] = get_stats_from_song_vec(song_vec)
+
+print(means)
+print(stdevs)
+
+cursor.close()
+conn.close()
+
+"""
+A sample Query and construction of song_vecs and titles
 
 #Use some query to find a track id
 q = "SELECT title, track_id FROM songs WHERE artist_name="
 q += encode_string('Bob Dylan')
 res = c.execute(q)
 songs = res.fetchall()[:4]
-#print(songs)
 
 #Generate the path and feature vector for that song
 song_vec = []
@@ -124,21 +178,4 @@ for i in range(len(songs)):
     song_path = get_path_from_id(songs[i][1])
     song_features = get_feature_vector(song_path)
     song_vec.append(song_features)
-
-build_csv(titles, song_vec)
-
-[song_vec, titles] = read_csv('song_subset.csv')
-#get_stats_from_song_vec(song_vec)
-#print(song_vec)
-print(titles)
-
-[means, variances, stdevs] = get_stats_from_song_vec(song_vec)
-
-print(means)
-print(stdevs)
-
-# close the cursor and the connection
-# (if for some reason you added stuff to the db or alter
-#  a table, you need to also do a conn.commit())
-c.close()
-conn.close()
+"""
