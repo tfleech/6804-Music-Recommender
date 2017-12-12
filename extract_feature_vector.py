@@ -164,6 +164,7 @@ def get_subset(cursor):
                                                                                               "'Michael Jackson') ORDER BY random() LIMIT 1000")
     #q = "SELECT title, track_id FROM songs WHERE artist_name="
     #q += encode_string('Bob Dylan')
+    q = ("SELECT title, track_id, artist_name FROM songs WHERE year > 1975 AND artist_hotttnesss > 0.6 ORDER BY random() LIMIT 1000")
     res = cursor.execute(q)
     songs = res.fetchall()
 
@@ -214,7 +215,7 @@ use.
 [titles, artists, song_vec] = read_csv('song_subset.csv')
 #print(titles)
 #print(artists)
-print(len(titles))
+#print(len(titles))
 
 [means, variances, stdevs] = get_stats_from_song_vec(song_vec)
 
