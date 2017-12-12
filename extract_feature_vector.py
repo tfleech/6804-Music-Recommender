@@ -44,7 +44,7 @@ def get_path_from_id(id):
 Finds the squared error between two feature vectors
 """
 def se(feature1, feature2):
-    return np.sum(np.square(np.subtract(feature1, feature2)))
+    return np.sum(np.square(np.subtract(feature1[:4], feature2[:4])))
 
 
 """
@@ -114,17 +114,17 @@ song vectors.
 """
 def get_subset(cursor):
     #Select 0.1% (1,000 songs) from the database
-    #q = "SELECT title, track_id FROM songs WHERE (ABS(CAST((BINARY_CHECKSUM(*) *RAND()) as int)) % 10000) < 10"
-    q = "SELECT title, track_id FROM songs WHERE artist_name="
-    q += encode_string('Bob Dylan')
+    q = "SELECT title, track_id FROM songs ORDER BY random() LIMIT 1000"
+    #q = "SELECT title, track_id FROM songs WHERE artist_name="
+    #q += encode_string('Bob Dylan')
     res = cursor.execute(q)
-    songs = res.fetchall()[:4]
+    songs = res.fetchall()
 
     #Generate the path and feature vector for that song
     song_vec = []
     titles = []
     for i in range(len(songs)):
-        titles.append(songs[i][0])
+        titles.append(songs[i][0].encode('utf-8'))
         song_path = get_path_from_id(songs[i][1])
         song_features = get_feature_vector(song_path)
         song_vec.append(song_features)
@@ -146,12 +146,12 @@ def find_matches(new_vec, titles, song_vec, N):
     return suggestions
 
 # PATH TO track_metadat.db
-#dbfile = '/media/tom/New Volume/6.804/database/AdditionalFiles/track_metadata.db'
+dbfile = '/media/tom/New Volume/6.804/database/AdditionalFiles/track_metadata.db'
 
-# connect to the SQLite database
-#conn = sqlite3.connect(dbfile)
-#cursor = conn.cursor()
-#TABLENAME = 'songs'
+#connect to the SQLite database
+conn = sqlite3.connect(dbfile)
+cursor = conn.cursor()
+TABLENAME = 'songs'
 
 """
 Example of sampling database and then building csv for future
@@ -163,18 +163,21 @@ use.
 
 
 [titles, song_vec] = read_csv('song_subset.csv')
-print(titles)
+#print(titles)
 
 [means, variances, stdevs] = get_stats_from_song_vec(song_vec)
 
 print(means)
 print(stdevs)
 
-new_vec = [110.0, 0.0, 0.0, -14.0, 1980]
-print(find_matches(new_vec, titles, song_vec, 2))
+#print(titles[:5])
+#print(song_vec[:5])
 
-#cursor.close()
-#conn.close()
+new_vec = [121.0, 0.0, 0.0, -13, 2000]
+print(find_matches(new_vec, titles, song_vec, 10))
+
+cursor.close()
+conn.close()
 
 """
 A sample Query and construction of song_vecs and titles
