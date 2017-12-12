@@ -19,13 +19,14 @@ loudnes, and year given a path.  The path can be generated using
 """
 def get_feature_vector(path):
     song_data = h5.open_h5_file_read(path)
-    danceability = h5.get_danceability(song_data)
-    energy = h5.get_energy(song_data)
+    m = np.matrix(h5.get_segments_timbre(song_data))
+    average_timbre = m.mean()
+    mode = h5.get_mode(song_data)
     loudness = h5.get_loudness(song_data)
     tempo = h5.get_tempo(song_data)
     year = h5.get_year(song_data)
     song_data.close()
-    return [tempo, danceability, energy, loudness, year]
+    return [tempo, average_timbre, mode, loudness, year]
 
 
 """
@@ -51,10 +52,10 @@ def se(feature1, feature2):
 Adds the titles and feature vectors for a list of songs to a csv file.  This
 is used to store a subset of the main database for comparisons later.
 """
-def build_csv(titles, features):
+def build_csv(titles, artists, features):
     data_to_write = []
     for i in range(len(titles)):
-        data_to_write.append([titles[i], features[i][0], features[i][1], features[i][2], features[i][3], features[i][4]])
+        data_to_write.append([titles[i], artists[i], features[i][0], features[i][1], features[i][2], features[i][3], features[i][4]])
     myFile = open('song_subset.csv', 'w')
     with myFile:
         writer = csv.writer(myFile)
@@ -66,12 +67,14 @@ Reads in songs stored in csv
 def read_csv(csv_file):
     songs = []
     titles = []
+    artists = []
     with open(csv_file) as myFile:
         reader = csv.reader(myFile)
         for row in reader:
             titles.append(row[0])
-            songs.append([float(row[1]), float(row[2]), float(row[3]), float(row[4]), float(row[5])])
-    return [titles, songs]
+            artists.append(row[1])
+            songs.append([float(row[2]), float(row[3]), float(row[4]), float(row[5]), float(row[6])])
+    return [titles, artists, songs]
 
 
 """
@@ -114,7 +117,51 @@ song vectors.
 """
 def get_subset(cursor):
     #Select 0.1% (1,000 songs) from the database
-    q = "SELECT title, track_id FROM songs ORDER BY random() LIMIT 1000"
+    #AND ROWID IN (select ROWID FROM songs ORDER BY random() LIMIT 1000)
+    q = ("SELECT title, track_id, artist_name FROM songs WHERE year > 1950 AND artist_name IN ('Bob Dylan', "
+                                                                                              "'Kanye West', "
+                                                                                              "'Mariah Carey', "
+                                                                                              "'Eminem', "
+                                                                                              "'Sam Smith', "
+                                                                                              "'Maroon 5', "
+                                                                                              "'Imagine Dragons', "
+                                                                                              "'Beyonce', "
+                                                                                              "'Taylor Swift', "
+                                                                                              "'Rihanna', "
+                                                                                              "'Madonna', "
+                                                                                              "'Justin Bieber', "
+                                                                                              "'Katy Perry', "
+                                                                                              "'Bruno Mars', "
+                                                                                              "'Selena Gomez', "
+                                                                                              "'Britney Spears', "
+                                                                                              "'Lady Gaga', "
+                                                                                              "'Adele', "
+                                                                                              "'Prince', "
+                                                                                              "'Drake', "
+                                                                                              "'Nicki Minaj', "
+                                                                                              "'Ed Sheeran', "
+                                                                                              "'Jay Z', "
+                                                                                              "'Billy Joel', "
+                                                                                              "'Elton John', "
+                                                                                              "'The Rolling Stones', "
+                                                                                              "'Justin Timberlake', "
+                                                                                              "'Whitney Houston', "
+                                                                                              "'Kelly Clarkson', "
+                                                                                              "'Bruce Springsteen', "
+                                                                                              "'The Weeknd', "
+                                                                                              "'OneRepublic', "
+                                                                                              "'Chris Brown', "
+                                                                                              "'Pitbull', "
+                                                                                              "'Ariana Grande', "
+                                                                                              "'Stevie Wonder', "
+                                                                                              "'U2', "
+                                                                                              "'David Bowie', "
+                                                                                              "'Demi Lovato', "
+                                                                                              "'Elvis Presley', "
+                                                                                              "'Sia', "
+                                                                                              "'One Direction', "
+                                                                                              "'Christina Aguilera', "
+                                                                                              "'Michael Jackson') ORDER BY random() LIMIT 1000")
     #q = "SELECT title, track_id FROM songs WHERE artist_name="
     #q += encode_string('Bob Dylan')
     res = cursor.execute(q)
@@ -123,13 +170,15 @@ def get_subset(cursor):
     #Generate the path and feature vector for that song
     song_vec = []
     titles = []
+    artists = []
     for i in range(len(songs)):
         titles.append(songs[i][0].encode('utf-8'))
+        artists.append(songs[i][2].encode('utf-8'))
         song_path = get_path_from_id(songs[i][1])
         song_features = get_feature_vector(song_path)
         song_vec.append(song_features)
 
-    return [titles, song_vec]
+    return [titles, song_vec, artists]
 
 def find_matches(new_vec, titles, song_vec, N):
     suggestions = []
@@ -157,24 +206,31 @@ TABLENAME = 'songs'
 Example of sampling database and then building csv for future
 use.
 """
-#[titles, song_vec] = get_subset(cursor)
-#build_csv(titles, song_vec)
+#[titles, song_vec, artists] = get_subset(cursor)
+#build_csv(titles, artists, song_vec)
 
 
 
-[titles, song_vec] = read_csv('song_subset.csv')
+[titles, artists, song_vec] = read_csv('song_subset.csv')
 #print(titles)
+#print(artists)
+print(len(titles))
 
 [means, variances, stdevs] = get_stats_from_song_vec(song_vec)
 
 print(means)
 print(stdevs)
 
-#print(titles[:5])
-#print(song_vec[:5])
+subset = np.random.choice(len(titles), 5)
+sample_songs = [titles[x] for x in subset]
+sample_song_vec = [song_vec[x] for x in subset]
+sample_artists = [artists[x] for x in subset]
+print(sample_songs)
+print(sample_artists)
+#print(sample_song_vec)
 
-new_vec = [121.0, 0.0, 0.0, -13, 2000]
-print(find_matches(new_vec, titles, song_vec, 10))
+#new_vec = [125.7, 3.5, 0.0, -10, 1999]
+#print(find_matches(new_vec, titles, song_vec, 10))
 
 cursor.close()
 conn.close()
