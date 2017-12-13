@@ -1,40 +1,178 @@
-var modelBPM = function(){
-  var mBPM = sample(Gaussian({mu: 110, sigma: 10}))
-  observe(Gaussian({mu: mBPM, sigma: 1}), 130)
-  observe(Gaussian({mu: mBPM, sigma: 5}), 100)
-  observe(Gaussian({mu: mBPM, sigma: 2}), 120)
-  return mBPM
+var song1 = [104.971, 10.197432209737828, 0, -5.46, 2008, 4]
+var song2 = [77.722999999999999, -5.1167269624573377, 0.61706040273021567, -14.128, 2003, 7]
+var song3 = [133.34999999999999, 10.754461580594679, 0.60840068299848638, -6.71, 2005, 8]
+var song4 = [134.18799999999999, 5.3314557938299476, 0, -3.891, 1987, 7]
+var song5 = [140.09, 8.4726872563352824, 0, -10.693, 2005, 9]
+var song6 = [126.445, 3.408734188034188, 0.0, -7.32, 2003.0, 4]
+var song7 = [124.874, 11.725427096502317, 0.6596120201245885, -6.184, 2007.0, 5]
+var song8 = [152.074, 8.717878105590062, 0.6787327173789123, -3.832, 2008.0, 9]
+var song9 = [116.959, -2.403557071396089, 0.8089211040237905, -13.167, 2002.0, 6]
+var song10 = [87.494, 0.5285424465240641, 0.0, -6.216, 2003.0, 5]
+
+var modelBPM = function() {
+  var favBPM = sample(Gaussian({mu:126.28, sigma:33.10}))
+  var noise = sample(Exponential({a:1}))
+  
+  var ratingDistAt = function(f) {
+    return Gaussian({
+      mu: 10*Math.exp(-(favBPM - f)*(favBPM - f)),
+      sigma: noise
+    })
+  }
+  
+  observe(ratingDistAt(song1[0]), song1[5])
+  observe(ratingDistAt(song2[0]), song2[5])
+  observe(ratingDistAt(song3[0]), song3[5])
+  observe(ratingDistAt(song4[0]), song4[5])
+  observe(ratingDistAt(song5[0]), song5[5])
+  observe(ratingDistAt(song6[0]), song6[5])
+  observe(ratingDistAt(song7[0]), song7[5])
+  observe(ratingDistAt(song8[0]), song8[5])
+  observe(ratingDistAt(song9[0]), song9[5])
+  observe(ratingDistAt(song10[0]), song10[5])
+  
+  return favBPM
+}
+var modelTimbre = function() {
+  var favTimbre = sample(Gaussian({mu:4.29, sigma:5.95}))
+  var noise = sample(Exponential({a:1}))
+  
+  var ratingDistAt = function(f) {
+    return Gaussian({
+      mu: 10*Math.exp(-(favTimbre - f)*(favTimbre - f)),
+      sigma: noise
+    })
+  }
+  
+  observe(ratingDistAt(song1[1]), song1[5])
+  observe(ratingDistAt(song2[1]), song2[5])
+  observe(ratingDistAt(song3[1]), song3[5])
+  observe(ratingDistAt(song4[1]), song4[5])
+  observe(ratingDistAt(song5[1]), song5[5])
+  observe(ratingDistAt(song6[1]), song6[5])
+  observe(ratingDistAt(song7[1]), song7[5])
+  observe(ratingDistAt(song8[1]), song8[5])
+  observe(ratingDistAt(song9[1]), song9[5])
+  observe(ratingDistAt(song10[1]), song10[5])
+  
+  return favTimbre
+}
+var modelMode = function() {
+  var favMode = sample(Gaussian({mu:0.399, sigma:0.339}))
+  var noise = sample(Exponential({a:1}))
+  
+  var ratingDistAt = function(f) {
+    return Gaussian({
+      mu: 10*Math.exp(-(favMode - f)*(favMode - f)),
+      sigma: noise
+    })
+  }
+  
+  observe(ratingDistAt(song1[2]), song1[5])
+  observe(ratingDistAt(song2[2]), song2[5])
+  observe(ratingDistAt(song3[2]), song3[5])
+  observe(ratingDistAt(song4[2]), song4[5])
+  observe(ratingDistAt(song5[2]), song5[5])
+  observe(ratingDistAt(song6[2]), song6[5])
+  observe(ratingDistAt(song7[2]), song7[5])
+  observe(ratingDistAt(song8[2]), song8[5])
+  observe(ratingDistAt(song9[2]), song9[5])
+  observe(ratingDistAt(song10[2]), song10[5])
+  
+  return favMode
+}
+var modelLoud = function() {
+  var favLoud = sample(Gaussian({mu:-7.81, sigma:4.21}))
+  var noise = sample(Exponential({a:1}))
+  
+  var ratingDistAt = function(f) {
+    return Gaussian({
+      mu: 10*Math.exp(-(favLoud - f)*(favLoud - f)),
+      sigma: noise
+    })
+  }
+  
+  observe(ratingDistAt(song1[3]), song1[5])
+  observe(ratingDistAt(song2[3]), song2[5])
+  observe(ratingDistAt(song3[3]), song3[5])
+  observe(ratingDistAt(song4[3]), song4[5])
+  observe(ratingDistAt(song5[3]), song5[5])
+  observe(ratingDistAt(song6[3]), song6[5])
+  observe(ratingDistAt(song7[3]), song7[5])
+  observe(ratingDistAt(song8[3]), song8[5])
+  observe(ratingDistAt(song9[3]), song9[5])
+  observe(ratingDistAt(song10[3]), song10[5])
+  
+  return favLoud
+}
+var modelYear = function() {
+  var favYear = sample(Gaussian({mu:2001, sigma:7.97}))
+  var noise = sample(Exponential({a:1}))
+  
+  var ratingDistAt = function(f) {
+    return Gaussian({
+      mu: 10*Math.exp(-(favYear - f)*(favYear - f)),
+      sigma: noise
+    })
+  }
+  
+  observe(ratingDistAt(song1[4]), song1[5])
+  observe(ratingDistAt(song2[4]), song2[5])
+  observe(ratingDistAt(song3[4]), song3[5])
+  observe(ratingDistAt(song4[4]), song4[5])
+  observe(ratingDistAt(song5[4]), song5[5])
+  observe(ratingDistAt(song6[4]), song6[5])
+  observe(ratingDistAt(song7[4]), song7[5])
+  observe(ratingDistAt(song8[4]), song8[5])
+  observe(ratingDistAt(song9[4]), song9[5])
+  observe(ratingDistAt(song10[4]), song10[5])
+  
+  return favYear
 }
 
-var modelDance = function(){
-  var mDance = sample(Gaussian({mu: 5, sigma: 2}))
-  observe(Gaussian({mu: mDance, sigma: 0.8}), 3)
-  observe(Gaussian({mu: mDance, sigma: 0.5}), 8)
-  observe(Gaussian({mu: mDance, sigma: 0.1}), 9)
-  return mDance
-}
+var posteriorBPM = Infer({method:"MCMC", samples:100000}, modelBPM)
+var posteriorTimbre = Infer({method:"MCMC", samples:100000}, modelTimbre)
+var posteriorMode = Infer({method:"MCMC", samples:100000}, modelMode)
+var posteriorLoud = Infer({method:"MCMC", samples:100000}, modelLoud)
+var posteriorYear = Infer({method:"MCMC", samples:100000}, modelYear)
+// print(sample(posteriorBPM))
+// print(sample(posteriorTimbre))
+// print(sample(posteriorMode))
+// print(sample(posteriorLoud))
+// print(sample(posteriorYear))
+// viz(posteriorBPM)
+// viz(posteriorTimbre)
+// viz(posteriorMode)
+// viz(posteriorLoud)
+// viz(posteriorYear)
 
-
-var distBPM = Infer({method: 'MCMC', samples:10000}, modelBPM)
-var distDance = Infer({method: 'MCMC', samples:10000}, modelDance)
-
-var mapBPM = map(function(x) {return sample(distBPM)}, _.range(10000))
+var mapBPM = map(function(x) {return sample(posteriorBPM)}, _.range(10000))
 var uBPM = listMean(mapBPM)
 var sBPM = listVar(mapBPM)
 
+var mapTimbre = map(function(x) {return sample(posteriorTimbre)}, _.range(10000))
+var uTimbre = listMean(mapTimbre)
+var sTimbre = listVar(mapTimbre)
 
-var mapDance = map(function(x) {return sample(distDance)}, _.range(10000))
-var uDance = listMean(mapDance)
-var sDance = listVar(mapDance)
+var mapMode = map(function(x) {return sample(posteriorMode)}, _.range(10000))
+var uMode = listMean(mapMode)
+var sMode = listVar(mapMode)
 
-//print(sDance)
-//print(uDance)
+var mapLoud = map(function(x) {return sample(posteriorLoud)}, _.range(10000))
+var uLoud = listMean(mapLoud)
+var sLoud = listVar(mapLoud)
 
+var mapYear = map(function(x) {return sample(posteriorYear)}, _.range(10000))
+var uYear = listMean(mapYear)
+var sYear = listVar(mapYear)
 
-
-var u = Vector([uBPM, uDance])
-var c = Matrix([[sBPM, 0.03],[0.05, sDance]])
+var u = Vector([uBPM, uTimbre, uMode, uLoud, uYear])
+var c = Matrix([[sBPM, 23.11, 0.25, 26.78, -3.16],
+                [23.11, sTimbre, -0.14, 12.15, -2.42],
+                [0.25, -0.14, sMode, 0.17, 0.62],
+                [26.78, 12.15, 0.17, sLoud, 9.41],
+                [-3.16, -2.42, 0.62, 9.41, sYear]])
 var song_vec = MultivariateGaussian({mu: u, cov: c})
 var s = sample(song_vec)
-//print(s)
-viz(song_vec)
+print(s)
+//viz(song_vec)

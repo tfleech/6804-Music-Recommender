@@ -21,12 +21,15 @@ def get_feature_vector(path):
     song_data = h5.open_h5_file_read(path)
     m = np.matrix(h5.get_segments_timbre(song_data))
     average_timbre = m.mean()
-    mode = h5.get_mode(song_data)
+    hotness = h5.get_song_hotttnesss(song_data)
+    if (not hotness > 0):
+      hotness = 0
+    #mode = h5.get_mode(song_data)
     loudness = h5.get_loudness(song_data)
     tempo = h5.get_tempo(song_data)
     year = h5.get_year(song_data)
     song_data.close()
-    return [tempo, average_timbre, mode, loudness, year]
+    return [tempo, average_timbre, hotness, loudness, year]
 
 
 """
@@ -44,9 +47,11 @@ def get_path_from_id(id):
 """
 Finds the squared error between two feature vectors
 """
-def se(feature1, feature2):
-    return np.sum(np.square(np.subtract(feature1[:4], feature2[:4])))
+def se(feature1, feature2, stdevs):
+    return np.sum(np.square(np.divide(np.subtract(feature1[:5], feature2[:5]), stdevs)))
 
+def dot_error(feature1, feature2):
+    return np.dot(feature1, feature2)
 
 """
 Adds the titles and feature vectors for a list of songs to a csv file.  This
@@ -97,7 +102,10 @@ def get_stats_from_song_vec(song_vec):
         variances.append(np.var(feature_lists[i], ddof=1))
         stdevs.append(variances[i]**0.5)
 
-    return [means, variances, stdevs]
+    x = np.array(feature_lists)
+    cov = np.cov(x)
+
+    return [means, variances, stdevs, cov]
 
 def encode_string(s):
     """
@@ -181,18 +189,19 @@ def get_subset(cursor):
 
     return [titles, song_vec, artists]
 
-def find_matches(new_vec, titles, song_vec, N):
+def find_matches(new_vec, titles, artists, song_vec, stdevs, N):
     suggestions = []
     for n in range(N):
         min_ind = 0;
         min_val = 99999999;
         for i in range(len(song_vec)):
-            if se(song_vec[i], new_vec) < min_val:
-                min_val = se(song_vec[i], new_vec)
+            if se(song_vec[i], new_vec, stdevs) < min_val:
+                min_val = se(song_vec[i], new_vec, stdevs)
                 min_ind = i
-        suggestions.append(titles[min_ind])
+        suggestions.append([titles[min_ind], artists[min_ind], song_vec[min_ind]])
         titles.pop(min_ind)
         song_vec.pop(min_ind)
+        artists.pop(min_ind)
     return suggestions
 
 # PATH TO track_metadat.db
@@ -217,21 +226,30 @@ use.
 #print(artists)
 #print(len(titles))
 
-[means, variances, stdevs] = get_stats_from_song_vec(song_vec)
+[means, variances, stdevs, cov] = get_stats_from_song_vec(song_vec)
 
 print(means)
 print(stdevs)
+#print(cov)
 
 subset = np.random.choice(len(titles), 5)
 sample_songs = [titles[x] for x in subset]
 sample_song_vec = [song_vec[x] for x in subset]
 sample_artists = [artists[x] for x in subset]
-print(sample_songs)
-print(sample_artists)
+#print(sample_songs)
+#print(sample_artists)
 #print(sample_song_vec)
 
-#new_vec = [125.7, 3.5, 0.0, -10, 1999]
-#print(find_matches(new_vec, titles, song_vec, 10))
+new_vec = [134.26, 8.93, 0.84, -4.52, 2004]
+print(find_matches(new_vec, titles, artists, song_vec, stdevs, 1))
+new_vec = [132.99, 9.11, 0.85, -4.43, 2004]
+print(find_matches(new_vec, titles, artists, song_vec, stdevs, 1))
+new_vec = [130.60, 9.06, 0.85, -4.50, 2004]
+print(find_matches(new_vec, titles, artists, song_vec, stdevs, 1))
+new_vec = [131.84, 9.04, 0.85, -4.60, 2004]
+print(find_matches(new_vec, titles, artists, song_vec, stdevs, 1))
+new_vec = [132.80, 9.18, 0.85, -4.58, 2004]
+print(find_matches(new_vec, titles, artists, song_vec, stdevs, 1))
 
 cursor.close()
 conn.close()
