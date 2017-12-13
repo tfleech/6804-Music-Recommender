@@ -1,0 +1,46 @@
+
+var uBPM = 110
+var sBPM = 10
+var uDance = 5
+var sDance = 2
+var means = Vector([uBPM, uDance])
+var covs = Matrix([[sBPM*sBPM, 0],[0, sDance*sDance]])
+
+var model = function() {
+  var kernel = function(prevVal) {
+    return MultivariateGaussian({mu: prevVal, cov: covs});
+  }
+  var userFavourite = sample(MultivariateGaussian({mu: means, cov: covs}), {driftKernel: kernel})
+  var noise = sample(Exponential({a:1}))
+  
+  var ratingDistAt = function(fv) {
+    return Gaussian({
+      mu: 10*Math.exp(-((userFavourite.data["0"] - fv.data["0"])*(userFavourite.data["0"] - fv.data["0"]) + 
+                        (userFavourite.data["1"] - fv.data["1"])*(userFavourite.data["1"] - fv.data["1"]))),
+//       mu: 10*Math.exp(-((userFavourite.data["0"] - fv[0]) + 
+//                         (userFavourite.data["1"] - fv[1]))),
+      sigma: noise
+    })
+  }
+
+  observe(ratingDistAt(Vector([130, 6])), 10)
+  observe(ratingDistAt(Vector([130, 6])), 10)
+  observe(ratingDistAt(Vector([130, 6])), 10)
+  observe(ratingDistAt(Vector([130, 6])), 10)
+  observe(ratingDistAt(Vector([130, 6])), 10)
+  
+  return userFavourite
+}
+
+
+var posterior = Infer({method:"MCMC", samples:1000, lag:10}, model)
+posterior.samples
+var xs = map(function(v){
+  return v['value']['data']["0"]
+}, posterior.samples)
+var ys = map(function(v){
+  return v['value']['data']["1"]
+}, posterior.samples)
+viz.scatter(xs,ys)
+// viz(posterior)
+// print(sample(posterior))
