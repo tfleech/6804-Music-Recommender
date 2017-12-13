@@ -1,36 +1,115 @@
-   
-   \documentclass[11pt]{article}
-   \renewcommand{\baselinestretch}{1.05}
-   \usepackage{amsmath,amsthm,verbatim,amssymb,amsfonts,amscd, graphicx}
-   \usepackage{graphics}
-   \graphicspath{ {images/} }
-   \topmargin0.0cm
-   \headheight0.0cm
-   \headsep0.0cm
-   \oddsidemargin0.0cm
-   \textheight23.0cm
-   \textwidth16.5cm
-   \footskip1.0cm
-   \theoremstyle{plain}
-   \newtheorem{theorem}{Theorem}
-   \newtheorem{corollary}{Corollary}
-   \newtheorem{lemma}{Lemma}
-   \newtheorem{proposition}{Proposition}
-   \newtheorem*{surfacecor}{Corollary 1}
-   \newtheorem{conjecture}{Conjecture} 
-   \newtheorem{question}{Question} 
-   \theoremstyle{definition}
-   \newtheorem{definition}{Definition}
+\documentclass{amsart}
+\pagestyle{plain}
+\setlength{\parskip}{0in}
+\setlength{\textwidth}{6in}
+\setlength{\topmargin}{0in}
+\setlength{\textheight}{9in}
+\setlength{\parindent}{.25in}
+\setlength{\oddsidemargin}{0cm}
+\setlength{\evensidemargin}{0cm}
+
+\setlength{\parindent}{.2in}
+
+\usepackage{amsthm,mathtools}
+\usepackage[all]{xy}
+
+\theoremstyle{plain}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+
+
+\usepackage{amssymb,amsmath,tabularx,graphicx,float,placeins}
+\usepackage{tikz}
+\usepackage{float}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{graphics}
+\usepackage{array}
+\usepackage{lipsum}
+\graphicspath{ {images/} }
+\usetikzlibrary[calc,intersections,through,backgrounds,arrows,decorations.pathmorphing]
+
+\def\Rbb{\mathbb{R}}
+
+\usepackage{etoolbox}
+\patchcmd{\section}{\scshape}{\bfseries}{}{}
+\makeatletter
+\renewcommand{\@secnumfont}{\bfseries}
+\makeatother
    
    \begin{document}
    	
    	\title{ Music Recommendation }
    	\author{ Thomas Leech and William Loucks }
+   	
+   	\begin{abstract}
+   		This paper examines the efficacy of song recommendation based on preferred musical features. We assess that a user's immediate preference for a particular type of song may be dependent on contextual factors outside of a his or her historical preference. For instance, mood, song theme, time of the year, and time of day might influence a consumer's song choice for a short period of time. Currently, many companies recommend songs based on collaborative filtering, ignoring the aforementioned contextual information that surrounds a user's choice of song. To understand other factors that may be indicative of musical preference, we illustrate a statistical approach that parameterizes features from a dataset of 1 million songs. We learned that...
+   	\end{abstract}
+   
    	\maketitle
-   	hi our projects is on music
+   	
+   	\noindent \hrulefill \ \\
+	\noindent \textbf{Contents:}
+   	\begin{enumerate}
+   		\item \textbf{Prior Work}
+   		\item \textbf{Introduction}
+   		\item \textbf{Data Collection}
+   		\item \textbf{The Model}
+   		\item \textbf{Data Storage and Processing}
+   		\item \textbf{Conclusion}
+   		\item \textbf{References}
+   	\end{enumerate}
+   \noindent \hrulefill
+
+   	\section{Prior Work}
+   	
+   	Assessing the most effective way to recommend material to users based on demonstrated preferences is a challenge of keen interest within the consumer product industry. Whether its food, clothing, movies, or songs, showcasing material that a user is likely to consume helps retain user interest and aims to increase product sales. In late 1999, Pandora Media created the Music Genome Project to isolate 450 musical attributes within a given song for the purpose of using the information to queue a unique list of song recommendations for each user. Since then, Pandora has patented the technology, registered the name as a trademark, and refused to release its list of 450 attributes, making the project's parameters a trade secret and highlighting the interest in designing systems to recommend songs to consumers [e]. While the magic of Pandora's music recommendation system rests in the organization's ability to extract musical information and to manipulate a large amount of data, other companies have taken different approaches.
+   	
+   	In 2007, Songza introduced a digital, on demand music recommendation platform that uses a curated crowd of individuals to create playlists with certain themes. To use the service, listeners would simply log onto the site and select a packet of songs that most closely fits their interests. While Songza hasn't been directly available since late 2015, its services have since been folded into Google Play Music [c,d]. In contrast to Pandora, Songza's approach relies on humans to determine which songs are most similar, and by extension, which songs a user might enjoy given that user's preferences. 
+   	
+   	In addition, Spotify, the music streaming service with over 100 million users, employs three techniques to recommend songs to its users: analysis of musical features, web searching, and collaborative filtering. Spotify takes Pandora's approach of decomposing songs into relevant features, such as tempo and loudness, to assess how likely a user is to enjoy a given song. However, Spotify only uses this technique for new songs that haven't had enough time to develop a base of listeners. Moreover, the audio streaming company also uses natural language processing platforms to explore websites for metadata, incorporating words that are associated with particular songs and artists into its models. Lastly, collaborative filtering allows Spotify to crowd source assistance for its recommendation algorithm. In collaborative filtering, a user's listening history will be compared to the preferences of other users who have a similar listening history [f]. The concept of collaborative filtering is illustrated in Figure 1.
+   	
+   	\begin{figure}[h]
+   		\centering
+   		\includegraphics[width=0.7\linewidth]{collaborative_filtering}
+   		\caption{\textbf{Collaborative Filtering: }The black arrows represent known preferences for each consumer. The red arrows indicate suggestions made by the producer, based on the preferences of consumers with similar interests [a].}
+   		\label{fig:collaborative_filtering}
+   	\end{figure}
+   	
+   	According to Spotify, Discover Weekly, the playlist of recommended songs that Spotify genereates for every user each week, was used to stream over 5 billion songs from July 2015 to May 2016 [g]. As a result, it's hard to doubt the success of the threefold method to suggest songs that the audio streaming service employs. However, there is a human element, allowing for user feedback, that Spotify lacks. Netflix, for instance, also uses collaborative filtering (to recommend movies and TV shows); however, the video streaming service offers a "thumbs up", "thumbs down" rating feature, which adds a \textit{user} factor to the recommendation algorithm. Netflix augments the collaborative filtering process, likely to hone in on users who have not only streamed the same video as the user of interest, but also rated movies and shows in a similar way. The benefit of this system is to prevent the algorithm from believing that a user's history represents his or her preferences, since a user could have streamed unsatisfactory media. On the other hand, a user may not rate a show or movie every time after watching, decreasing the effect of the feature. However, the added opportunity to score media increases the recommendation algorithm's confidence in its suggestions and possibly allows the model to deliver more optimal suggestions.
+   	
+   	\section{Introduction}
+   	
+   	We would like to test a song suggestion model that analyzes a user's preferences for particular songs based on song features, like Pandora and Spotify, and that incorporates Netflix's approach of direct user feedback. We recognize the success of Spotify and Pandora, and we would like to determine if user feedback, in the form of a rating from 1-10 on a particular song, enhances song recommendation capability. In the end, the model will yield a novel way to recommend songs to users, based on listening history and a pattern of song scoring, and will shed light on which musical properties may be the most indicative of user preference. 
+   	
+   	\section{The Model}
+   	Our approach is to dynamically queue songs for users based on their demonstrated preferences. Moreover, each time a subject uses our model, the model resets to allow for variation in musical preference. For instance, if a user wants to listen to slower music at one particular time, our model would queue the appropriate music. On the other hand, if the same user where to employ the model later in the day, slower music would not be immediately queued, allowing for variation in context. Our model examines 5 musical features, thrusting the features into what we call feature space. Feature space is a five dimensional space where each dimension is represented by one of the features. The five musical features, which we also call attributes, considered are timbre, song hotttnesss, loudness, tempo, and year of production. While there may be other factors that could influence a user's affection for a particular song, the million song data set that we used, provided by Columbia University and created by MIT Media Lab spinoff company, The Echo Nest, most appropriately characterizes these five features for our purpose [h]. We believe that these five musical attributes can have second and third order effects when indicating user preferences, yielding more information about a user than just his or her penchant for the five attributes. The definitions of the attributes, and their possible higher order effects, are as follows: \\
+   	
+  	\noindent \textbf{Timbre: }\textit{The ability for a user to distinguish different instruments and artistic techniques. This metric could indicate the presence, and extent of, of particular instruments, such as piano, vocals, guitar, and others. The presence of certain instruments produces implications about about genre and musical theme.} \\
+  	
+  	\noindent \textbf{Song \textit{Hotttnesss}: }\textit{The Echo Nest generates this metric based on a song's popularity. Hotttnesss is used to indicate whether or not a user has preferences for songs and artists that are more well known. Additionally, hotttnesss consequently groups artists into tiers, and a user might find his or her preferences in a particular band of popularity.} \\
+  	
+  	\noindent \textbf{Loudness: }\textit{The sound intensity of the song. This metric could indicate if a user likes soft songs, or louder songs, which can be suited for different contexts or moods. Loudness can also indicate which themes and tones a user prefers.} \\
+  	
+  	\noindent \textbf{Tempo: }\textit{The song represented by its beats per minute. Beats per minute indicates the speed of the song, which might vary depending on the context of listening-- e.g. with friends or alone-- and the  mood of the listener.} \\
+  	
+  	\noindent \textbf{Year of Production: }\textit{The year the song was made publicly available. A user may have a preference for a particular era of music, some eras having distinct tones which contains attributes beyond the ones in our feature space.} \\
+  	
+  	
    	
    	
-   	
-   	
+   	\section{References}
+   	\noindent [a] https://www.balabit.com/blog/category/unsupervised/ \\ \\
+   	\noindent [b] https://help.netflix.com/en/node/9898 \\ \\
+   	\noindent [c] https://en.wikipedia.org/wiki/Songza \\ \\
+   	\noindent [d] https://www.wired.com/2015/12/songza-is-dead-but-it-lives-on-within-google-play-music/ \\ \\
+   	\noindent [e] https://en.wikipedia.org/wiki/Music-Genome-Project \\ \\ 
+   	\noindent [f] https://hackernoon.com/spotifys-discover-weekly-how-machine-learning-finds-your- \\ new-music-19a41ab76efe \\ \\
+   	\noindent [g] https://news.spotify.com/us/2016/05/25/discover-weekly-reaches-nearly-5-billion-tracks-streamed-since-launch/ \\ \\
+   	\noindent [h] https://labrosa.ee.columbia.edu/millionsong/
    		
    \end{document}
