@@ -9,14 +9,14 @@ var sLoudness = 4.21
 var uYear = 2001
 var sYear = 7.97
 var means = Vector([uBPM, uTimbre, uHotness, uLoudness, uYear])
-var covs = Matrix([[sBPM*sBPM, 0, 0, 0, 0],
-                   [0, sTimbre*sTimbre, 0, 0, 0],
-                   [0, 0, sHotness*sHotness, 0, 0],
-                   [0, 0, 0, sLoudness*sLoudness, 0],
-                   [0, 0, 0, 0, sYear*sYear]])
+var covs = Matrix([[sBPM*sBPM, 23.11, 0.25, 26.78, -3.16],
+                   [23.11, sTimbre*sTimbre, -0.14, 12.15, -2.42],
+                   [0.25, -0.14, sHotness*sHotness, 0.17, 0.62],
+                   [26.78, 12.15, 0.17, sLoudness*sLoudness, 9.41],
+                   [-3.16, -2.42, 0.62, 9.41, sYear*sYear]])
 
 var exp_score = function(f, means) {
-  return Math.exp(-0.1*((f[0] - means[0])*(f[0] - means[0])/(sBPM*sBPM) + 
+  return 10*Math.exp(-0.1*((f[0] - means[0])*(f[0] - means[0])/(sBPM*sBPM) + 
                            (f[1] - means[1])*(f[1] - means[1])/(sTimbre*sTimbre) + 
                            (f[2] - means[2])*(f[2] - means[2])/(sHotness*sHotness) + 
                            (f[3] - means[3])*(f[3] - means[3])/(sLoudness*sLoudness) + 
@@ -50,24 +50,22 @@ var model = function() {
   }
 
   
-  observe(ratingDistAt(Vector([119.923, -2.8013801261829654, 0.804053424848183, -9.745, 2005.0])), 9)
-  observe(ratingDistAt(Vector([119.923, -2.8013801261829654, 0.804053424848183, -9.745, 2005.0])), 9)
-  observe(ratingDistAt(Vector([119.923, -2.8013801261829654, 0.804053424848183, -9.745, 2005.0])), 9)
-//  observe(ratingDistAt(Vector([108.238, 6.002481157112526, 0.624061571285285, -6.963, 2003.0])), 5)
-//   observe(ratingDistAt(Vector([98.929, 4.766226990553307, 0.6622867297586058, -6.571, 2006.0])), 7)
-//   observe(ratingDistAt(Vector([103.037, 8.91338355263158, 0.70208260628272, -3.094, 2003.0])), 2)
-//   observe(ratingDistAt(Vector([106.403, 2.1494667832167837, 0.5, -11.78, 1994.0])), 4)
-//   observe(ratingDistAt(Vector([93.221, -6.332451388888889, 0.8963642040414423, -13.278, 2006.0])), 5)
-//   observe(ratingDistAt(Vector([113.061, 17.094832412060303, 0.5, -6.933, 1994.0])), 1)
-//   observe(ratingDistAt(Vector([147.626, 11.434978927203066, 0.5, -4.997, 2008.0])), 8)
-//   observe(ratingDistAt(Vector([137.837, -1.1904719430485764, 0.5, -9.403, 2009.0])), 6)
-//   observe(ratingDistAt(Vector([137.952, 2.463328381642512, 0.783341966690339, -3.024, 2006.0])), 7)
+observe(ratingDistAt(Vector([152.145, 2.3072427956989245, 0.5, -7.338, 2002.0])), 7)
+observe(ratingDistAt(Vector([147.802, 4.244118045112781, 0.5, -6.012, 2006.0])), 4)
+observe(ratingDistAt(Vector([162.689, 8.173788235294117, 0.5082891059677606, -14.187, 1981.0])), 7)
+observe(ratingDistAt(Vector([135.988, 12.83349133050248, 0.7865534054973415, -4.217, 2009.0])), 8)
+observe(ratingDistAt(Vector([89.839, 7.729586100861009, 0.729256794107681, -7.998, 2007.0])), 3)
+observe(ratingDistAt(Vector([105.007, 1.0852431077694238, 0.579038701159863, -4.765, 1996.0])), 3)
+observe(ratingDistAt(Vector([168.013, 4.575070185395384, 0.5, -6.306, 2007.0])), 6)
+observe(ratingDistAt(Vector([109.218, -5.230366726835139, 0.8199383637518962, -9.514, 1991.0])), 5)
+observe(ratingDistAt(Vector([97.248, 3.107256034482759, 0.7299791910214264, -6.952, 2009.0])), 8)
+observe(ratingDistAt(Vector([94.095, -10.273039884868421, 0.5637552083912959, -10.807, 2006.0])), 6)
   
   return userFavourite
 }
 
 
-var posterior = Infer({method:"MCMC", samples:1000, burn: 0, lag:10}, model)
+var posterior = Infer({method:"MCMC", samples:1000, burn: 10000, lag:10}, model)
 posterior.samples
 var xs = map(function(v){
   return v['value']['data']["0"]
@@ -94,9 +92,16 @@ var uYear = listMean(mapYear)
 
 var means = [uBPM, uTimbre, uHotness, uLoud, uYear]
 
-var test_song1 = [177.798, 7.780489782244557, 0.0, -9.937, 1982.0] //1
-var test_song2 = [158.777, 8.298783798576903, 0.7296628898178243, -4.41, 1994.0] //1
-var test_song3 = [106.049, 9.454607344632768, 0.0, -8.981, 1987.0] //3
-var test_song4 = [116.007, 8.543286321989529, 0.0, -5.911, 2007.0] //3
-var test_song5 = [128.002, 5.713961211366936, 0.8943089336706364, -5.246, 2009.0] //4
+var test_song1 = [121.388, -6.062389200998751, 0.89383122996871, -11.293, 1997.0] //4
+var test_song2 = [183.511, 4.683208192090396, 0.5, -13.621, 1980.0] //3
+var test_song3 = [159.586, 5.657182946773714, 0.7834403836154684, -12.975, 2002.0] //5
+var test_song4 = [149.317, -12.769823307034848, 0.5949574301507565, -21.152, 2004.0] //5
+var test_song5 = [141.968, 5.898772349505841, 0.7732153974353551, -3.826, 2008.0] //7
+
+
+print(exp_score(test_song1, means))
+print(exp_score(test_song2, means))
+print(exp_score(test_song3, means))
+print(exp_score(test_song4, means))
+print(exp_score(test_song5, means))
 //print(sample(posterior))
